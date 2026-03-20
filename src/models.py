@@ -4,7 +4,7 @@ from enum import Enum
 from datetime import datetime
 
 class DispatchStatus(str, Enum):
-    ACKNOWLEDGED = "acknowledged"
+    PENDING = "pending"
     OPEN = "open"
     RESOLVED = "resolved"
 
@@ -29,7 +29,7 @@ class Dispatch(BaseModel):
 class DispatchResponse(BaseModel):
     dispatch_id: str
     severity: Optional[Severity]
-    status: DispatchStatus
+    status: DispatchStatus = DispatchStatus.OPEN
     location: Geolocation
     description: str
     timestamp: datetime

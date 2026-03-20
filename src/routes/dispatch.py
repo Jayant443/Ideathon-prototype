@@ -1,24 +1,19 @@
-from fastapi import APIRouter, File, Form, UploadFile
+from fastapi import APIRouter, File, Form, UploadFile, HTTPException
 import asyncio
 import cloudinary
 import cloudinary.uploader
+from typing import Optional
+from bson import ObjectId
 from src.models import Dispatch, DispatchResponse, DispatchStatus, Severity, Geolocation
 from datetime import datetime, timedelta
 from src.database import get_database
 from src.config import CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET, CLOUDINARY_CLOUD_NAME
 
-db = get_database()
-dispatch_collection = db["dispatches"]
-
-cloudinary.config(
-    cloud_name=CLOUDINARY_CLOUD_NAME,
-    api_key=CLOUDINARY_API_KEY,
-    api_secret=CLOUDINARY_API_SECRET
-)
-
 dispatch_router = APIRouter()
 
 async def check_duplicate(lat: float, lng: float) -> dict | None:
+    db = get_database()
+    dispatch_collection = db["dispatches"]
     cutoff = datetime.utcnow() - timedelta(minutes=15)
     return await dispatch_collection.find_one({
         "timestamp": {"$gte": cutoff},
@@ -31,12 +26,32 @@ async def check_duplicate(lat: float, lng: float) -> dict | None:
     })
 
 async def upload_to_cloudinary(image_bytes: bytes) -> str:
+    cloudinary.config(
+        cloud_name=CLOUDINARY_CLOUD_NAME,
+        api_key=CLOUDINARY_API_KEY,
+        api_secret=CLOUDINARY_API_SECRET
+    )
     result = await asyncio.to_thread(cloudinary.uploader.upload, image_bytes)
     return result["secure_url"]
 
+def serialize_dispatch(doc: dict) -> DispatchResponse:
+    location = doc.get("location", {})
+    coords = location.get("coordinates", [0.0, 0.0])
+    return DispatchResponse(
+        dispatch_id=str(doc["_id"]),
+        severity=doc.get("severity"),
+        status=doc.get("status"),
+        location=Geolocation(lat=coords[1], lng=coords[0]),
+        description=doc.get("description", ""),
+        timestamp=doc.get("timestamp"),
+        image_url=doc.get("image_url")
+    )
+
 @dispatch_router.post("/report")
-async def report_dispatch(lat: str = Form(...), lng: str = Form(...), description: str = Form(""), image: UploadFile = File(...)):
-    existing = check_duplicate(lat, lng)
+async def report_dispatch(lat: float = Form(...), lng: float = Form(...), description: str = Form(""), image: UploadFile = File(...)):
+    db = get_database()
+    dispatch_collection = db["dispatches"]
+    existing = await check_duplicate(lat, lng)
     if existing:
         return {"message": "This dispatch is already reported"}
     image_bytes = await image.read()
@@ -44,16 +59,15 @@ async def report_dispatch(lat: str = Form(...), lng: str = Form(...), descriptio
         "location": {"type": "Point", "coordinates": [lng, lat]},
         "description": description,
         "severity": None,
-        "status": DispatchStatus.ACKNOWLEDGED,
+        "status": DispatchStatus.PENDING,
         "timestamp": datetime.utcnow(),
         "image_url": None
     }
     result = await dispatch_collection.insert_one(dispatch_doc)
     dispatch_id = result.inserted_id
 
-    image_url = await asyncio.gather(upload_to_cloudinary(image_bytes))
-
-    severity = Severity.UNKNOWN
+    image_url = await upload_to_cloudinary(image_bytes)
+    severity = Severity.UNKNOWN        # This is temporary, need to be changed once the AI endpoint is ready
 
     await dispatch_collection.update_one(
         {"_id": dispatch_id},
@@ -69,3 +83,28 @@ async def report_dispatch(lat: str = Form(...), lng: str = Form(...), descriptio
         "dispatch_id": str(dispatch_id),
         "severity": severity
     }
+
+@dispatch_router.get("/get")
+async def get_all_dispatches(lng: float, lat: float):
+    db = get_database()
+    dispatch_collection = db["dispatches"]
+    cursor = dispatch_collection.find({
+        "location": {
+            "$near": {
+                "$geometry": {"type": "Point", "coordinates": [lng, lat]},
+                "$maxDistance": 1000
+            }
+        }
+    })
+    docs = await cursor.to_list(length=200)
+    return [serialize_dispatch(d) for d in docs]
+
+@dispatch_router.get("/get/{dispatch_id}")
+async def get_dispatch(dispatch_id: str):
+    db = get_database()
+    dispatch_collection = db["dispatches"]
+    doc = await dispatch_collection.find_one({"_id": ObjectId(dispatch_id)})
+    if not doc:
+        return HTTPException(status_code=404, detail="Dispatch not found")
+    return serialize_dispatch(doc)
+

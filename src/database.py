@@ -9,9 +9,13 @@ class Database:
 db = Database()
 
 async def connect_to_mongodb():
-    db.client = AsyncIOMotorClient(MONGODB_URI)
-    db.database = db.client[DB_NAME]
-    print("Connected successfully")
+    try:
+        db.client = AsyncIOMotorClient(MONGODB_URI)
+        db.database = db.client[DB_NAME]
+        await db.database["dispatches"].create_index([("location", "2dsphere")])
+        print("Connected successfully")
+    except Exception as e:
+        raise RuntimeError("Failed to connect")
 
 async def close_mongodb_connection() -> None:
     if db.client:
