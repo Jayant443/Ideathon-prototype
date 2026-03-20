@@ -1,0 +1,96 @@
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 75px;
+}
+
+.nav {
+  background-color: #fe424e;
+  height: 70px;
+}
+
+.navbar-brand {
+  font-family: "Poppins";
+  color: white !important;
+}
+
+.form-map {
+  padding: 2rem;
+  display: flex;
+  height: 90vh;
+  width: 22rem;
+  justify-content: center;
+  align-items: center;
+  background-image: url("Screenshot\ \(42\).png");
+  background-size: cover;
+  background-position: center;
+  border-radius: 2.5rem;
+}
+
+form {
+  font-family: "Poppins";
+  position: relative;
+  top: 5rem;
+  bottom: 1rem;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  max-width: 18rem;
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.9);
+  color: black;
+  border-radius: 1.5rem;
+  align-items: center;
+  /* display: none; */
+}
+
+.button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #fe424d;
+  border-radius: 15px;
+}
+
+.btn {
+  padding: 10px 23px !important;
+  color: black;
+  font-weight: 500 !important;
+}
+
+.file-upload {
+  font-size: 0.8rem !important;
+}
+
+.analyze-element {
+  display: none;
+  height: 100%;
+  min-height: 80%;
+  padding: 3rem;
+  flex-direction: column;
+  max-width: 18rem;
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.9);
+  color: red;
+  border-radius: 1.5rem;
+  align-items: center;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.analyze-element.active {
+  display: flex;
+  height: 100%;
+  min-height: 80%;
+  padding: 3rem;
+  flex-direction: column;
+  max-width: 18rem;
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.9);
+  color: red;
+  border-radius: 1.5rem;
+  align-items: center;
+  font-size: 1rem;
+  text-align: center;
+}
