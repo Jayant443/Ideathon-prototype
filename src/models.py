@@ -24,6 +24,7 @@ class Dispatch(BaseModel):
     severity: Optional[Severity]
     status: DispatchStatus = DispatchStatus.OPEN
     timestamp: datetime
+    ai_description: Optional[str] = None
     image_url: Optional[str] = None
 
 class DispatchResponse(BaseModel):
@@ -33,4 +34,5 @@ class DispatchResponse(BaseModel):
     location: Geolocation
     description: str
     timestamp: datetime
+    ai_description: Optional[str] = None
     image_url: Optional[str]

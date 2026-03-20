@@ -5,6 +5,7 @@ import cloudinary.uploader
 from typing import Optional
 from bson import ObjectId
 from src.models import Dispatch, DispatchResponse, DispatchStatus, Severity, Geolocation
+from src.routes.ai_response import call_ai_model
 from datetime import datetime, timedelta
 from src.database import get_database
 from src.config import CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET, CLOUDINARY_CLOUD_NAME
@@ -44,6 +45,7 @@ def serialize_dispatch(doc: dict) -> DispatchResponse:
         location=Geolocation(lat=coords[1], lng=coords[0]),
         description=doc.get("description", ""),
         timestamp=doc.get("timestamp"),
+        ai_description=doc.get("ai_description", ""),
         image_url=doc.get("image_url")
     )
 
@@ -61,28 +63,28 @@ async def report_dispatch(lat: float = Form(...), lng: float = Form(...), descri
         "severity": None,
         "status": DispatchStatus.PENDING,
         "timestamp": datetime.utcnow(),
+        "ai_description": None,
         "image_url": None
     }
     result = await dispatch_collection.insert_one(dispatch_doc)
     dispatch_id = result.inserted_id
 
-    image_url = await upload_to_cloudinary(image_bytes)
-    severity = Severity.UNKNOWN        # This is temporary, need to be changed once the AI endpoint is ready
+    ai_response, image_url = await asyncio.gather(call_ai_model(image_bytes), upload_to_cloudinary(image_bytes))
+    severity = Severity(ai_response.get("severity", "unknown"))
+    ai_description = ai_response.get("ai_description")
 
     await dispatch_collection.update_one(
         {"_id": dispatch_id},
         {"$set": {
             "severity": severity,
             "status": DispatchStatus.OPEN,
+            "ai_description": ai_description,
             "image_url": image_url
         }}
     )
 
-    return {
-        "message": "Dispatch reported successfully",
-        "dispatch_id": str(dispatch_id),
-        "severity": severity
-    }
+    updated_doc = await dispatch_collection.find_one({"_id": ObjectId(dispatch_id)})
+    return serialize_dispatch(updated_doc)
 
 @dispatch_router.get("/get")
 async def get_all_dispatches(lng: float, lat: float):
@@ -107,4 +109,5 @@ async def get_dispatch(dispatch_id: str):
     if not doc:
         return HTTPException(status_code=404, detail="Dispatch not found")
     return serialize_dispatch(doc)
+
 

@@ -14,7 +14,7 @@ function closeCard() {
 // Fake blockchain
 function storeBlockchain() {
   const hash = "0x" + Math.random().toString(16).substr(2, 8);
-  alert("Stored on Blockchain ✅\nHash: " + hash);
+  alert("Stored on Blockchain \nHash: " + hash);
 }
 
 let reportsPanel = document.querySelector(".reports-panel");
