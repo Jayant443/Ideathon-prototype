@@ -3,7 +3,7 @@
 
 /* Show card
 function showCard() {
-  document.getElementById("incidentCard").style.display = "block";
+	document.getElementById("incidentCard").style.display = "block";
 }
 */
 //Close card
@@ -20,14 +20,16 @@ const timeSection = document.querySelector(".time");
 const imageSection = document.querySelector(".incident-img");
 const incidentCard = document.querySelector(".incident-card");
 
+let activeMarker = null;
+
 function closeCard() {
-  document.getElementById("incidentCard").style.display = "none";
+	document.getElementById("incidentCard").style.display = "none";
 }
 
 // Fake blockchain
 function storeBlockchain() {
-  const hash = "0x" + Math.random().toString(16).substr(2, 8);
-  alert("Stored on Blockchain \nHash: " + hash);
+	const hash = "0x" + Math.random().toString(16).substr(2, 8);
+	alert("Stored on Blockchain \nHash: " + hash);
 }
 
 //map setup
@@ -39,101 +41,101 @@ L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 let marker = L.marker([18.52, 73.85]).addTo(map);
 
 marker.on("click", function () {
-  showCard();
+	showCard();
 });
 */
 
 //Highlight Pin on map when an incident is clicked in the side panel
 
 /*function focusLocation(lat, lng) {
-  map.setView([lat, lng], 14);
+	map.setView([lat, lng], 14);
 }*/
 
 //backend connection:
 
 //fetch data from backend
 async function loadReports() {
-  navigator.geolocation.getCurrentPosition(async (position) => {
-    // const lat = position.coords.latitude;
-    // const lng = position.coords.longitude;
-  });
-  const lat = 18.5204;
-  const lng = 73.8567;
-  const res = await fetch(
-    `http://127.0.0.1:8000/dispatch/get?lng=${lng}&lat=${lat}`,
-  );
-  const data = await res.json();
-  renderReports(data);
+	navigator.geolocation.getCurrentPosition(async (position) => {
+		// const lat = position.coords.latitude;
+		// const lng = position.coords.longitude;
+	});
+	const lat = 18.5204;
+	const lng = 73.8567;
+	const res = await fetch(
+		`http://127.0.0.1:8000/dispatch/get?lng=${lng}&lat=${lat}`,
+	);
+	const data = await res.json();
+	renderReports(data);
 }
 
 //add to panel function
-function addToPanel(report) {
-  const item = document.createElement("button");
-  item.classList.add("list-group-item");
-  item.classList.add("list-group-item-action");
-  //description or report id to be displayed in the side panel?
-  let locationInPanel = document.createElement("div");
-  locationInPanel.innerText = `Location: ${report.location.lat}, ${report.location.lng}`;
+function addToPanel(report, marker) {
+	const item = document.createElement("button");
+	item.classList.add("list-group-item");
+	item.classList.add("list-group-item-action");
+	//description or report id to be displayed in the side panel?
+	let locationInPanel = document.createElement("div");
+	locationInPanel.innerText = `Location: ${report.location.lat}, ${report.location.lng}`;
 
-  let descInPanel = document.createElement("div");
-  descInPanel.classList.add("list-group-description");
-  descInPanel.innerText = `Description: ${report.description}`;
+	let descInPanel = document.createElement("div");
+	descInPanel.classList.add("list-group-description");
+	descInPanel.innerText = `Description: ${report.description}`;
 
-  item.addEventListener("click", () => {
-    map.setView([report.location.lat, report.location.lng], 15);
-    showIncidentCard(report);
-  });
+	item.addEventListener("click", () => {
+		map.setView([report.location.lat, report.location.lng], 15);
+		showIncidentCard(report, marker);
+	});
 
-  item.appendChild(locationInPanel);
-  item.appendChild(descInPanel);
+	item.appendChild(locationInPanel);
+	item.appendChild(descInPanel);
 
-  panel.appendChild(item);
+	panel.appendChild(item);
 }
 
 //show data in card
-function showIncidentCard(report) {
-  reportIdSection.innerText = report.dispatch_id;
-  descriptionSection.innerText = report.description;
-  locationSection.innerText = report.location.lat + ", " + report.location.lng;
-  severitySection.innerText = report.severity;
-  aiDescSection.innerText = report.ai_description;
+function showIncidentCard(report, marker) {
+	activeMarker = marker;
+	reportIdSection.innerText = report.dispatch_id;
+	descriptionSection.innerText = report.description;
+	locationSection.innerText = report.location.lat + ", " + report.location.lng;
+	severitySection.innerText = report.severity;
+	aiDescSection.innerText = report.ai_description;
 
-  const date = new Date(report.timestamp);
-  timeSection.innerText = date.toLocaleString();
-  imageSection.src = report.image_url;
-  incidentCard.style.display = "block";
+	const date = new Date(report.timestamp);
+	timeSection.innerText = date.toLocaleString();
+	imageSection.src = report.image_url;
+	updateCardPosition();
+	incidentCard.style.display = "block";
 }
 
 //show markers on map
 function renderReports(reports) {
-  panel.innerHTML = "";
-  reports.forEach((report) => {
-    console.log(report);
-    const { lat, lng } = report.location;
+	panel.innerHTML = "";
+	reports.forEach((report) => {
+		console.log(report);
+		const { lat, lng } = report.location;
 
-    const marker = L.marker([lat, lng]).addTo(map);
+		const marker = L.marker([lat, lng]).addTo(map);
 
-    addToPanel(report);
-    marker.on("click", () => {
-      showIncidentCard(report);
-    });
-  });
+		addToPanel(report, marker);
+		marker.on("click", () => {
+			showIncidentCard(report, marker);
+		});
+	});
 }
 
 loadReports();
 
 reportsPanel.addEventListener("click", () => {
-  sidePanel.classList.toggle("open");
+	sidePanel.classList.toggle("open");
 });
 
-// move card when map is moved
-let marker = L.marker([18.52, 73.85]).addTo(map);
-map.on("move", function () {
-  console.log("map moved");
-  const pos = marker.getLatLng();
-  const point = map.latLngToContainerPoint(pos);
+function updateCardPosition() {
+	if (!activeMarker) return;
+	const pos = map.latLngToContainerPoint(activeMarker.getLatLng());
+	incidentCard.style.left = (pos.x + 20) + "px";
+	incidentCard.style.top = (pos.y - 20) + "px";
+}
 
-  const card = document.getElementById("incidentCard");
-  card.style.left = point.x + "px";
-  card.style.top = point.y + "px";
-});
+map.on("move", updateCardPosition);
+map.on("zoom", updateCardPosition);
