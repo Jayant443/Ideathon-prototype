@@ -13,6 +13,7 @@ const reportsPanel = document.querySelector(".reports-panel");
 const sidePanel = document.getElementById("sidePanel");
 const reportIdSection = document.querySelector(".report-id");
 const descriptionSection = document.querySelector(".desc");
+const aiDescSection = document.querySelector(".ai-desc");
 const locationSection = document.querySelector(".location");
 const severitySection = document.querySelector(".severity");
 const timeSection = document.querySelector(".time");
@@ -86,6 +87,7 @@ function showIncidentCard(report) {
 	descriptionSection.innerText = report.description;
 	locationSection.innerText = report.location.lat + ", " + report.location.lng;
 	severitySection.innerText = report.severity;
+	aiDescSection.innerText = report.ai_description;
 
 	const date = new Date(report.timestamp);
 	timeSection.innerText = date.toLocaleString();
@@ -95,17 +97,18 @@ function showIncidentCard(report) {
 
 //show markers on map
 function renderReports(reports) {
+	panel.innerHTML = "";
 	reports.forEach((report) => {
-		panel.innerHTML = "";
+		console.log(report);
 		const { lat, lng } = report.location;
-
+		
 		const marker = L.marker([lat, lng]).addTo(map);
-
+		
+		addToPanel(report);
 		marker.on("click", () => {
 			showIncidentCard(report);
 		});
 
-		addToPanel(report);
 	});
 }
 

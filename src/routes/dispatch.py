@@ -21,7 +21,7 @@ async def check_duplicate(lat: float, lng: float) -> dict | None:
         "location": {
             "$near": {
                 "$geometry": {"type": "Point", "coordinates": [lng, lat]},
-                "$maxDistance": 100
+                "$maxDistance": 10000
             }
         }
     })
@@ -94,7 +94,7 @@ async def get_all_dispatches(lng: float, lat: float):
         "location": {
             "$near": {
                 "$geometry": {"type": "Point", "coordinates": [lng, lat]},
-                "$maxDistance": 1000
+                "$maxDistance": 10000
             }
         }
     })
