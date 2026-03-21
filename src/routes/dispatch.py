@@ -4,7 +4,7 @@ import cloudinary
 import cloudinary.uploader
 from typing import Optional
 from bson import ObjectId
-from src.models import Dispatch, DispatchResponse, DispatchStatus, Severity, Geolocation
+from src.schema import Dispatch, DispatchResponse, DispatchStatus, Severity, Geolocation
 from src.routes.ai_response import call_ai_model
 from datetime import datetime, timedelta
 from src.database import get_database

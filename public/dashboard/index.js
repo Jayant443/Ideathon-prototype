@@ -7,21 +7,28 @@ function showCard() {
 }
 */
 //Close card
+
+const panel = document.querySelector(".reports-list");
+const reportsPanel = document.querySelector(".reports-panel");
+const sidePanel = document.getElementById("sidePanel");
+const reportIdSection = document.querySelector(".report-id");
+const descriptionSection = document.querySelector(".desc");
+const locationSection = document.querySelector(".location");
+const severitySection = document.querySelector(".severity");
+const timeSection = document.querySelector(".time");
+const imageSection = document.querySelector(".incident-img");
+const incidentCard = document.querySelector(".incident-card");
+
 function closeCard() {
-  document.getElementById("incidentCard").style.display = "none";
+	document.getElementById("incidentCard").style.display = "none";
 }
 
 // Fake blockchain
 function storeBlockchain() {
-  const hash = "0x" + Math.random().toString(16).substr(2, 8);
-  alert("Stored on Blockchain \nHash: " + hash);
+	const hash = "0x" + Math.random().toString(16).substr(2, 8);
+	alert("Stored on Blockchain \nHash: " + hash);
 }
 
-let reportsPanel = document.querySelector(".reports-panel");
-let sidePanel = document.getElementById("sidePanel");
-reportsPanel.addEventListener("click", () => {
-  sidePanel.classList.toggle("open");
-});
 
 //map setup
 let map = L.map("map").setView([18.52, 73.85], 10);
@@ -46,58 +53,65 @@ marker.on("click", function () {
 
 //fetch data from backend
 async function loadReports() {
-  const res = await fetch("http://127.0.0.1:8000/dispatch/get");
-  const data = await res.json();
-
-  renderReports(data);
+	navigator.geolocation.getCurrentPosition(async (position) => {
+		// const lat = position.coords.latitude;
+		// const lng = position.coords.longitude;
+	});
+	const lat = 18.5204;
+	const lng = 73.8567;
+	const res = await fetch(`http://127.0.0.1:8000/dispatch/get?lng=${lng}&lat=${lat}`);
+	const data = await res.json();
+	renderReports(data);
 }
 
 //add to panel function
 function addToPanel(report) {
-  panel.innerHTML = "";
-  const panel = document.querySelector(".reports-list");
+	const item = document.createElement("button");
+	item.classList.add("list-group-item");
+	item.classList.add("list-group-item-action");
+	item.innerText = report.description;
+	//description or report id to be displayed in the side panel?
 
-  const item = document.createElement("button");
-  item.classList.add("list-group-item list-group-item-action");
-  item.innerText = report.description;
-  //description or report id to be displayed in the side panel?
+	item.addEventListener("click", () => {
+		map.setView([report.location.lat, report.location.lng], 15);
+		showIncidentCard(report);
+	});
 
-  item.addEventListener("click", () => {
-    map.setView([report.location.lat, report.location.lng], 15);
-  });
-
-  panel.appendChild(item);
+	panel.appendChild(item);
 }
 
 //show data in card
 function showIncidentCard(report) {
-  document.querySelector(".report-id").innerText = report.dispatch_id;
-  document.querySelector(".desc").innerText = report.description;
-  document.querySelector(".location").innerText =
-    report.location.lat + ", " + report.location.lng;
-  document.querySelector(".severity").innerText = report.severity;
+	reportIdSection.innerText = report.dispatch_id;
+	descriptionSection.innerText = report.description;
+	locationSection.innerText = report.location.lat + ", " + report.location.lng;
+	severitySection.innerText = report.severity;
 
-  const date = new Date(report.timestamp);
-  document.querySelector(".time").innerText = date.toLocaleString();
-
-  document.querySelector(".incident-img").src = report.image_url;
-
-  document.querySelector(".incident-card").style.display = "block";
+	const date = new Date(report.timestamp);
+	timeSection.innerText = date.toLocaleString();
+	imageSection.src = report.image_url;
+	incidentCard.style.display = "block";
 }
 
 //show markers on map
 function renderReports(reports) {
-  reports.forEach((report) => {
-    const { lat, lng } = report.location;
+	reports.forEach((report) => {
+		panel.innerHTML = "";
+		const { lat, lng } = report.location;
 
-    const marker = L.marker([lat, lng]).addTo(map);
+		const marker = L.marker([lat, lng]).addTo(map);
 
-    marker.on("click", () => {
-      showIncidentCard(report);
-    });
+		marker.on("click", () => {
+			showIncidentCard(report);
+		});
 
-    addToPanel(report);
-  });
+		addToPanel(report);
+	});
 }
 
 loadReports();
+
+
+reportsPanel.addEventListener("click", () => {
+	sidePanel.classList.toggle("open");
+});

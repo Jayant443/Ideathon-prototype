@@ -7,7 +7,7 @@ class DispatchStatus(str, Enum):
     PENDING = "pending"
     OPEN = "open"
     RESOLVED = "resolved"
-
+    
 class Severity(str, Enum):
     LOW = "low"
     MEDIUM = "medium"
