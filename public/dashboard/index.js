@@ -125,3 +125,15 @@ loadReports();
 reportsPanel.addEventListener("click", () => {
   sidePanel.classList.toggle("open");
 });
+
+// move card when map is moved
+let marker = L.marker([18.52, 73.85]).addTo(map);
+map.on("move", function () {
+  console.log("map moved");
+  const pos = marker.getLatLng();
+  const point = map.latLngToContainerPoint(pos);
+
+  const card = document.getElementById("incidentCard");
+  card.style.left = point.x + "px";
+  card.style.top = point.y + "px";
+});
