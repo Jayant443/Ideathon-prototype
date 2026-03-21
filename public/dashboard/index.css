@@ -137,3 +137,8 @@ color: white !important;
 .nav-link:hover {
   color: #ffdede !important;
 }
+
+.list-group-description {
+  font-size: 0.8rem;
+  padding: 0;
+}
