@@ -29,15 +29,15 @@
 
     <div class="form-map">
       <div class="form">
-        <form action method="post" enctype="multipart/form-data">
+        <form id="reportForm">
           <div class="mb-3">
             <label for="name" class="form-label">Name</label>
-            <input id="name" class="form-control" type="text" />
+            <input id="name" name="name" class="form-control" type="text" />
           </div>
 
           <div class="mb-3">
             <label for="phone" class="form-label">Phone</label>
-            <input id="phone" class="form-control" type="number" />
+            <input id="phone" name="phone" class="form-control" type="number" />
           </div>
 
           <div class="mb-3">
@@ -47,16 +47,26 @@
 
           <div class="mb-3">
             <label for="images" class="form-label">Upload Images</label>
-            <input id="images" class="form-control file-upload" type="file" />
+            <input
+              id="images"
+              name="image"
+              class="form-control file-upload"
+              type="file"
+            />
           </div>
 
           <div class="mb-3">
             <label for="description" class="form-label">Description</label>
-            <input id="description" class="form-control" type="text" />
+            <input
+              id="description"
+              name="description"
+              class="form-control"
+              type="text"
+            />
           </div>
 
           <div class="mb-3 button">
-            <button type="button" class="btn">SOS</button>
+            <button type="submit" class="btn">SOS</button>
           </div>
         </form>
 

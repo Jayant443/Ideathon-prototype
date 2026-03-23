@@ -1,12 +1,29 @@
 let btn = document.querySelector(".btn");
 let analyzeElement = document.querySelector(".analyze-element");
-let form = document.querySelector(".form");
+let form = document.querySelector("#reportForm");
 
-btn.addEventListener("click", (e) => {
+form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  setTimeout(() => {
-    form.style.display = "none";
-    analyzeElement.classList.add("active");
-  }, 3000);
+  const formData = new FormData(form);
+  formData.append("lat", 18.54);
+  formData.append("lng", 73.88);
+
+  try {
+    const res = await fetch("http://127.0.0.1:8000/dispatch/report", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+    console.log(data);
+    // UI effect AFTER submit
+    setTimeout(() => {
+      form.style.display = "none";
+      analyzeElement.classList.add("active");
+    }, 1000);
+  } catch (err) {
+    console.error(err);
+    alert("Error submitting form");
+  }
 });
