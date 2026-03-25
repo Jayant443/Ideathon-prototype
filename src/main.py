@@ -6,6 +6,8 @@ from contextlib import asynccontextmanager
 import os
 from src.database import connect_to_mongodb, close_mongodb_connection
 from src.routes.dispatch import dispatch_router
+from fastapi import WebSocket, WebSocketDisconnect
+from src.connection_manager import manager
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -21,6 +23,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"]
 )
+
+
+@app.websocket("/ws/{authority_id}")
+async def websocket_endpoint(websocket: WebSocket, authority_id: int):
+    await manager.connect(authority_id, websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(authority_id)
 
 app.include_router(dispatch_router, prefix="/dispatch")
 

@@ -9,6 +9,7 @@ from src.routes.ai_response import call_ai_model
 from datetime import datetime, timedelta
 from src.database import get_database
 from src.config import CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET, CLOUDINARY_CLOUD_NAME
+from src.connection_manager import manager
 
 dispatch_router = APIRouter()
 
@@ -82,6 +83,15 @@ async def report_dispatch(lat: float = Form(...), lng: float = Form(...), descri
             "image_url": image_url
         }}
     )
+
+    await manager.notify_authorities([1], {
+        "event": "new_dispatch",
+        "dispatch_id": str(dispatch_id),
+        "severity": severity.value,
+        "location": {"lat": lat, "lng": lng},
+        "description": description,
+        "timestamp": dispatch_doc["timestamp"].isoformat()
+    })
 
     updated_doc = await dispatch_collection.find_one({"_id": ObjectId(dispatch_id)})
     return serialize_dispatch(updated_doc)

@@ -6,8 +6,8 @@ form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const formData = new FormData(form);
-  formData.append("lat", 18.54);
-  formData.append("lng", 73.88);
+  formData.append("lat", 18.549);
+  formData.append("lng", 73.869);
 
   try {
     const res = await fetch("http://127.0.0.1:8000/dispatch/report", {

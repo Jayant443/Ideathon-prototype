@@ -73,7 +73,6 @@ function addToPanel(report, marker) {
 	const item = document.createElement("button");
 	item.classList.add("list-group-item");
 	item.classList.add("list-group-item-action");
-	//description or report id to be displayed in the side panel?
 	let locationInPanel = document.createElement("div");
 	locationInPanel.innerText = `Location: ${report.location.lat}, ${report.location.lng}`;
 
@@ -110,9 +109,7 @@ function showIncidentCard(report, marker) {
 
 //show markers on map
 function renderReports(reports) {
-	panel.innerHTML = "";
 	reports.forEach((report) => {
-		console.log(report);
 		const { lat, lng } = report.location;
 
 		const marker = L.marker([lat, lng]).addTo(map);
@@ -122,6 +119,60 @@ function renderReports(reports) {
 			showIncidentCard(report, marker);
 		});
 	});
+}
+
+function connectWebSocket() {
+    const ws = new WebSocket("ws://127.0.0.1:8000/ws/1");
+
+    ws.onopen = () => {
+        console.log("Connected to WebSocket");
+    };
+
+    ws.onmessage = async (event) => {
+        const data = JSON.parse(event.data);
+        if (data.event === "new_dispatch") {
+            const res = await fetch(`http://127.0.0.1:8000/dispatch/get/${data.dispatch_id}`);
+            const report = await res.json();
+            const marker = L.marker([report.location.lat, report.location.lng]).addTo(map);
+            marker.on("click", () => {
+                showIncidentCard(report, marker);
+            });
+            addToPanel(report, marker);
+            showToast(data.severity, data.description);
+        }
+    };
+
+    ws.onclose = () => {
+        console.log("WebSocket disconnected — reconnecting in 3s...");
+        setTimeout(connectWebSocket, 3000);
+    };
+
+    ws.onerror = (err) => {
+        console.error("WebSocket error", err);
+        ws.close();
+    };
+}
+
+connectWebSocket();
+
+function showToast(severity, description) {
+    const color = severity === "high" ? "#dc3545" : severity === "medium" ? "#ffc107" : "#198754";
+    const toast = document.createElement("div");
+    toast.style.cssText = `
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        background: ${color};
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 0.5rem;
+        z-index: 9999;
+        font-family: Poppins;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    `;
+    toast.innerHTML = `<strong>New Dispatch!</strong><br>${description}`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
 }
 
 loadReports();
